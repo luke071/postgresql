@@ -38,14 +38,14 @@ Price decimal(6,2)
 
 CREATE TABLE Customers (
 CustomerId int,
-Name char(10) NOT NULL,
-Surname char(10) NOT NULL,
+Name char(20) NOT NULL,
+Surname char(20) NOT NULL,
 Adress char(255) NOT NULL
 );
 
 CREATE TABLE  Couriers (
 CourierId int,
-Name char(10) NOT NULL,
+Name char(20) NOT NULL,
 PriceBoxS decimal (6,2) NOT NULL,
 PriceBoxM decimal (6,2) NOT NULL,
 PriceBoxL decimal (6,2) NOT NULL
@@ -53,7 +53,7 @@ PriceBoxL decimal (6,2) NOT NULL
 
 CREATE TABLE Statuses (
 StatusId int,
-StatusName char(10) NOT NULL
+StatusName char(16) NOT NULL
 );
 
 CREATE TABLE Customers_Orders (
@@ -186,4 +186,37 @@ ADD CONSTRAINT FK4_Employees FOREIGN KEY
 		EmployeeId
 	)
 ;
+
+insert into Categories(CategoryId, CategoryName)
+values 
+(1, 'historical'),
+(2, 'fantasy'),
+(3, 'poetry'),
+(4, 'novel'),
+(5, 'natura')
+
+insert into Statuses(StatusId, StatusName) 
+values 
+(1, 'available'),
+(2, 'unavailable')
+
+insert into Books(BookId, CategoryId, Title, Author, CatalogNumber, PurchasePrice, SellingPrice, StockStatus, IsNew, IsSale) 
+values 
+(1, 4, 'The History of the Shire', 'Hildigrim Took', 'HAN00001', 40.00, 45.00, 1, false, false),
+(2, 2, 'Great Dragon', 'Fosco Baggins', 'HAN00001', 40.00, 45.00, 1, false, false),
+(3, 5, 'Mushroom atlas', 'Belladonna Took', 'HAN00001', 40.00, 45.00, 1, false, false),
+(4, 5, 'Herbal garden', 'Belladonna Took', 'HAN00001', 40.00, 45.00, 1, false, false)
+
+insert into Couriers(CourierId, Name, PriceBoxS, PriceBoxM,PriceBoxL)
+values 
+(1, 'Fast rabbit', 8.00, 10.00, 12.00)
+
+insert into Customers(CustomerId, Name, Surname, Adress)
+values 
+(1, 'Frodo', 'Baggins','Bag End'),
+(2, 'Merry', 'Brandybuck','Brandy Hall')
 ```
+
+
+
+
