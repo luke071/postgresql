@@ -1,6 +1,5 @@
 --Hobbit_Bookstore;
 
-
 CREATE TABLE Categories (
 CategoryId int,
 CategoryName char(50) NOT NULL
