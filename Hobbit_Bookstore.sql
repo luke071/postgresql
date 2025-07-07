@@ -20,7 +20,7 @@ CREATE TABLE Customers_Orders_Items (
 OrderId int,
 BookId int,
 Quantity int,
-Price decimal(6,2)
+Price decimal(6,2) DEFAULT 0
 );
 
 CREATE TABLE Customers (
@@ -46,18 +46,18 @@ StatusName char(20) NOT NULL
 CREATE TABLE Customers_Orders (
 OrderId int GENERATED ALWAYS AS IDENTITY (START WITH 1000),
 CustomerId int,
-StatusId int,
+StatusId int DEFAULT 1,
 EmployeeId int,
 CourierId int,
-OrderValue decimal(6,2),
-ToPay decimal(6,2),
-IsPaid decimal(6,2),
-Discount decimal(6,2),
-IsReturn boolean,
-OrderDate date,
+OrderValue decimal(6,2) DEFAULT 0,
+ToPay decimal(6,2) DEFAULT 0,
+IsPaid boolean DEFAULT false,
+Discount decimal(6,2) DEFAULT 0,
+IsReturn boolean DEFAULT false,
+OrderDate  date DEFAULT CURRENT_DATE,
 PackingDate date,
 SendingDate date,
-Comments char(255)
+Comments char(255)DEFAULT null
 );
 
 CREATE TABLE Employees (
@@ -212,11 +212,85 @@ values
 (2, 'Gaf Gamgee', 'Brandybuck', false)
 
 
+--Trigger function after INSERT (placing an order)
+
+CREATE OR REPLACE FUNCTION update_total_amount_after_insert()
+RETURNS TRIGGER AS $$
+BEGIN
+    UPDATE Customers_Orders
+    SET OrderValue = (
+        SELECT COALESCE(SUM(Quantity * Price), 0)
+        FROM Customers_Orders_Items
+        WHERE OrderId = NEW.OrderId
+    )
+    WHERE OrderId = NEW.OrderId;
+
+    RETURN NULL;
+END;
+$$ LANGUAGE plpgsql;
+
+--Trigger after INSERT
+
+CREATE OR REPLACE TRIGGER trg_update_total_amount_after_insert
+AFTER INSERT ON Customers_Orders_Items
+FOR EACH ROW
+EXECUTE FUNCTION update_total_amount_after_insert();
+
+--Trigger function after UPDATE (order edit)
+
+CREATE OR REPLACE FUNCTION update_total_amount_after_update()
+RETURNS TRIGGER AS $$
+BEGIN
+    UPDATE Customers_Orders
+    SET OrderValue = (
+        SELECT COALESCE(SUM(Quantity * Price), 0)
+        FROM Customers_Orders_Items
+        WHERE OrderId = NEW.OrderId
+    )
+    WHERE OrderId = NEW.OrderId;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+--Trigger after UPDATE
+
+CREATE OR REPLACE TRIGGER trg_update_total_amount_after_update
+AFTER UPDATE ON Customers_Orders_Items
+FOR EACH ROW
+EXECUTE FUNCTION update_total_amount_after_update();
+
+
+--Trigger function after DELETE (removing a book from the order)
+
+CREATE OR REPLACE FUNCTION update_total_amount_after_delete()
+RETURNS TRIGGER AS $$
+BEGIN
+    UPDATE Customers_Orders
+    SET OrderValue = (
+        SELECT COALESCE(SUM(Quantity * Price), 0)
+        FROM Customers_Orders_Items
+        WHERE OrderId = OLD.OrderId
+    )
+    WHERE OrderId = OLD.OrderId;
+
+    RETURN OLD;
+END;
+$$ LANGUAGE plpgsql;
+
+--Trigger after DELETE
+
+CREATE OR REPLACE TRIGGER trg_update_total_amount_after_delete
+AFTER DELETE ON Customers_Orders_Items
+FOR EACH ROW
+EXECUTE FUNCTION update_total_amount_after_delete();
+
+--A customer places an order in a bookstore 
 
 WITH new_order AS (
-    insert into Customers_Orders(CustomerId, StatusId, EmployeeId, CourierId, OrderValue, ToPay, IsPaid, Discount, IsReturn, OrderDate, PackingDate, SendingDate, Comments)
+    insert into Customers_Orders(CustomerId, EmployeeId, CourierId)
 	values
-	(1, 1, 1, 1, 00.00, 00.00, 00.00, 00.00, false, '2025-07-01', '2025-07-01', '2025-07-01', 'ok')
+	(1, 1, 1)
     RETURNING OrderId
 )
 insert into Customers_Orders_Items (OrderId, BookId,Quantity, Price)
@@ -226,3 +300,9 @@ select OrderId, book, quantity, price from new_order,
 (2, 1, 50),
 (3, 3, 45)
 ) AS product (book, quantity , price)
+
+--Testing the operation of triggers
+SELECT * FROM Customers_Orders
+SELECT * FROM Customers_Orders_Items
+UPDATE Customers_Orders_Items SET quantity = 3 WHERE bookid = 2
+DELETE FROM Customers_Orders_Items WHERE bookid = 1
