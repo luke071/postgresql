@@ -26,7 +26,7 @@ Price decimal(6,2)
 CREATE TABLE Customers (
 CustomerId int,
 Name char(20) NOT NULL,
-Surname char(10) NOT NULL,
+Surname char(20) NOT NULL,
 Adress char(255) NOT NULL
 );
 
@@ -38,13 +38,13 @@ PriceBoxM decimal (6,2) NOT NULL,
 PriceBoxL decimal (6,2) NOT NULL
 );
 
-CREATE TABLE Statuses (
+CREATE TABLE Orders_Statuses (
 StatusId int,
-StatusName char(16) NOT NULL
+StatusName char(20) NOT NULL
 );
 
 CREATE TABLE Customers_Orders (
-OrderId int NOT NULL DEFAULT 0,
+OrderId int GENERATED ALWAYS AS IDENTITY (START WITH 1000),
 CustomerId int,
 StatusId int,
 EmployeeId int,
@@ -62,8 +62,8 @@ Comments char(255)
 
 CREATE TABLE Employees (
 EmployeeId int,
-Name char(10) NOT NULL,
-Surname char(10) NOT NULL,
+Name char(15) NOT NULL,
+Surname char(15) NOT NULL,
 IsAvailable boolean
 );
 
@@ -102,8 +102,8 @@ ALTER TABLE Couriers ADD
 	)  
 ;
 
-ALTER TABLE Statuses ADD 
-	CONSTRAINT PK_Statuses PRIMARY KEY    
+ALTER TABLE Orders_Statuses ADD 
+	CONSTRAINT PK_Orders_Statuse PRIMARY KEY    
 	(
 		StatusId
 	)  
@@ -157,7 +157,7 @@ ADD CONSTRAINT FK1_Customers FOREIGN KEY
 ADD CONSTRAINT FK2_Statuses FOREIGN KEY 
 	(
 		StatusId
-	) REFERENCES Statuses (
+	) REFERENCES Orders_Statuses (
 		StatusId
 	),
 ADD CONSTRAINT FK3_Couriers FOREIGN KEY 
@@ -182,10 +182,13 @@ values
 (4, 'novel'),
 (5, 'natura')
 
-insert into Statuses(StatusId, StatusName) 
+insert into Orders_Statuses(StatusId, StatusName) 
 values 
-(1, 'available'),
-(2, 'unavailable')
+(1, 'pending'),
+(2, 'processing'),
+(3, 'shipped'),
+(4, 'cancelled'),
+(5, 'returned')
 
 insert into Books(BookId, CategoryId, Title, Author, CatalogNumber, PurchasePrice, SellingPrice, StockStatus, IsNew, IsSale) 
 values 
@@ -197,3 +200,29 @@ values
 insert into Couriers(CourierId, Name, PriceBoxS, PriceBoxM,PriceBoxL)
 values 
 (1, 'Fast rabbit', 8.00, 10.00, 12.00)
+
+insert into Customers(CustomerId, Name, Surname, Adress)
+values 
+(1, 'Frodo', 'Baggins','Bag End'),
+(2, 'Merry', 'Brandybuck','Brandy Hall')
+
+insert into Employees(EmployeeId, Name, Surname, IsAvailable)
+values 
+(1, 'Rosie Cotton', 'Baggins', true),
+(2, 'Gaf Gamgee', 'Brandybuck', false)
+
+
+
+WITH new_order AS (
+    insert into Customers_Orders(CustomerId, StatusId, EmployeeId, CourierId, OrderValue, ToPay, IsPaid, Discount, IsReturn, OrderDate, PackingDate, SendingDate, Comments)
+	values
+	(1, 1, 1, 1, 00.00, 00.00, 00.00, 00.00, false, '2025-07-01', '2025-07-01', '2025-07-01', 'ok')
+    RETURNING OrderId
+)
+insert into Customers_Orders_Items (OrderId, BookId,Quantity, Price)
+select OrderId, book, quantity, price from new_order,
+(VALUES
+(1, 1, 40),
+(2, 1, 50),
+(3, 3, 45)
+) AS product (book, quantity , price)
