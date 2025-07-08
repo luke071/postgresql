@@ -209,12 +209,12 @@ values
 (2, 2, 'Great Dragon', 'Fosco Baggins', 'HAN00001', 40.00, 45.00, 1, false, false),
 (3, 5, 'Mushroom atlas', 'Belladonna Took', 'HAN00002', 40.00, 45.00, 1, false, false),
 (4, 5, 'Herbal garden', 'Belladonna Took', 'HAN00003', 40.00, 45.00, 1, false, false),
-(5, 1, 'Dzieje Shire', 'Esmeralda Hamgee', 'HAN00004', 40.00, 45.00, 1, false, false),
-(6, 1, 'Mrok południa', 'Dudo Took', 'HAN00031', 30.00, 35.00, 1, false, false),
-(7, 1, 'Dobre czasy', 'Lily Grubb', 'HAN00034', 20.00, 25.00, 1, false, false),
-(8, 1, 'Historia Hobbitów', 'Bingo Took', 'HAN00032', 40.00, 45.00, 1, false, false),
-(9, 5, 'Wielki zielnik', 'Daisy Took', 'HAN00043', 43.00, 47.00, 1, false, false),
-(10, 5, 'Porady zielarskie', 'Daisy Took', 'HAN00061', 30.00, 35.00, 1, false, false)
+(5, 1, 'History of the South', 'Esmeralda Hamgee', 'HAN00004', 40.00, 45.00, 1, false, false),
+(6, 1, 'Midday gloom', 'Dudo Took', 'HAN00031', 30.00, 35.00, 1, false, false),
+(7, 1, 'Good times', 'Lily Grubb', 'HAN00034', 20.00, 25.00, 1, false, false),
+(8, 1, 'The first Hobbits', 'Bingo Took', 'HAN00032', 40.00, 45.00, 1, false, false),
+(9, 5, 'Great herbarium', 'Daisy Took', 'HAN00043', 43.00, 47.00, 1, false, false),
+(10, 5, 'Green meadow', 'Daisy Took', 'HAN00061', 30.00, 35.00, 1, false, false)
 
 insert into Couriers(CourierId, Name, PriceBoxS, PriceBoxM,PriceBoxL)
 values 
@@ -351,12 +351,12 @@ BEGIN
 	FLOOR(RANDOM() * 3 + 1)::INT
 	)
     RETURNING OrderId
-)
-insert into Customers_Orders_Items (OrderId, BookId, Quantity, Price)
-select OrderId, book, quantity, price from new_order,
-(VALUES
+	)
+	insert into Customers_Orders_Items (OrderId, BookId, Quantity, Price)
+	select OrderId, book, quantity, price from new_order,
+	(VALUES
 	(FLOOR(RANDOM() * 10 + 1)::INT, FLOOR(RANDOM() * 4 + 1)::INT, ROUND(FLOOR(RANDOM() * 21 + 40)::NUMERIC, 2))
-) AS product (book, quantity , price);
+	) AS product (book, quantity , price);
         i := i + 1;
     END LOOP;
 END$$;
