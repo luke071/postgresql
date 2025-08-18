@@ -318,18 +318,24 @@ EXECUTE FUNCTION update_total_amount_after_delete();
 --A customer places an order in a bookstore 
 
 WITH new_order AS (
-    insert into Customers_Orders(CustomerId, EmployeeId, CourierId)
-	values
-	(1, 1, 1)
+    INSERT INTO Customers_Orders(CustomerId, EmployeeId, CourierId)
+    VALUES (1, 1, 1)
     RETURNING OrderId
 )
-insert into Customers_Orders_Items (OrderId, BookId, Quantity, Price)
-select OrderId, book, quantity, price from new_order,
-(VALUES
-(1, 1, 40),
-(2, 1, 50),
-(3, 3, 45)
-) AS product (book, quantity , price)
+INSERT INTO Customers_Orders_Items (OrderId, BookId, Quantity, Price)
+SELECT 
+    new_order.OrderId,
+    p.book,
+    p.quantity,
+    b.SellingPrice
+FROM new_order
+JOIN (
+    VALUES
+    (1, 40),
+    (2, 50),
+    (3, 45)
+) AS p(book, quantity) ON TRUE
+JOIN Books b ON b.BookId = p.book;
 
 -- Testing the operation of triggers
 SELECT * FROM Customers_Orders
@@ -337,29 +343,39 @@ SELECT * FROM Customers_Orders_Items
 UPDATE Customers_Orders_Items SET quantity = 3 WHERE bookid = 2
 DELETE FROM Customers_Orders_Items WHERE bookid = 1
 
--- Adding 10000 random orders
+-- Adding 1000000 random orders in the bookstore
 DO $$
 DECLARE
     i INT := 1;
+    new_order_id INT;
 BEGIN
-    WHILE i <= 10000 LOOP
-		WITH new_order AS (
-    insert into Customers_Orders(CustomerId, EmployeeId, CourierId)
-	values(
-	FLOOR(RANDOM() * 10 + 1)::INT, 
-	FLOOR(RANDOM() * 4 + 1)::INT, 
-	FLOOR(RANDOM() * 3 + 1)::INT
-	)
-    RETURNING OrderId
-	)
-	insert into Customers_Orders_Items (OrderId, BookId, Quantity, Price)
-	select OrderId, book, quantity, price from new_order,
-	(VALUES
-	(FLOOR(RANDOM() * 10 + 1)::INT, FLOOR(RANDOM() * 4 + 1)::INT, ROUND(FLOOR(RANDOM() * 21 + 40)::NUMERIC, 2))
-	) AS product (book, quantity , price);
+    WHILE i <= 1000000 LOOP
+        -- Creating an order 
+        INSERT INTO Customers_Orders (CustomerId, EmployeeId, CourierId)
+        VALUES (
+            FLOOR(RANDOM() * 10 + 1),  -- CustomerId 1–10
+            FLOOR(RANDOM() * 4 + 1),   -- EmployeeId 1–4
+            FLOOR(RANDOM() * 3 + 1)    -- CourierId 1–3
+        )
+        RETURNING OrderId INTO new_order_id;
+
+        -- Adding 1–3 items to order
+        FOR j IN 1..FLOOR(RANDOM() * 3 + 1) LOOP
+            INSERT INTO Customers_Orders_Items (OrderId, BookId, Quantity, Price)
+            SELECT 
+                new_order_id,
+                b.BookId,
+                FLOOR(RANDOM() * 4 + 1),  -- Quantity 1–4
+                b.SellingPrice
+            FROM Books b
+            WHERE b.BookId = FLOOR(RANDOM() * 10 + 1);  -- BookId 1–10
+        END LOOP;
+
         i := i + 1;
     END LOOP;
-END$$;
+END $$;
+
+
 
 -- How many orders have been placed?
 SELECT COUNT(*) FROM Customers_Orders;
